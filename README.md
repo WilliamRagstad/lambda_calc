@@ -45,3 +45,17 @@ Or run a file with lambda calculus terms:
 ```bash
 ./lambda_calc examples/identity.lc
 ```
+
+## Fundamentals
+
+The lambda calculus is a formal system for expressing computation based on function abstraction and application using variable bindings.
+It is a universal model of computation that can express any computation that can be performed by a Turing machine.
+
+The reduction operation that drives computation is mainly $β$-reduction, which is the application of a function to an argument.
+
+$$
+(\lambda x.M)\ N \quad\rightarrow\quad M[x:=N]
+$$
+
+Where $M[x:=N]$ is the result of replacing all free occurrences of $x$ in the body of the abstraction $M$ with the argument expression $N$.
+The second fundamental operation is $α$-conversion ($(\lambda x.M[x])\rightarrow (\lambda y.M[y])$), which is the renaming of bound variables in an expression to avoid name collisions.
