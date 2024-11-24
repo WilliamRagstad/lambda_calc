@@ -22,3 +22,12 @@ Simply becomes `λw.w`.
 ```
 
 Is a non-terminating term.
+
+```list
+f = λx.λy.x y
+g = λz.z
+h = λw.w
+((f g) h)
+```
+
+Reduces to `λz.z`.
