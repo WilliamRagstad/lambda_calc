@@ -32,6 +32,58 @@ H = λw.w
 
 Uses assignments to simplify the last term `(F G) H`, and reduces to `λz.z`.
 
+### Data Encoding
+
+Boolean logic can be encoded using Church booleans:
+
+```hs
+True  = λx.λy.x
+False = λx.λy.y
+```
+
+And logical operations:
+
+```hs
+Not = λb.((b False) True)
+And = λa.λb.((a b) False)
+Or  = λa.λb.((a True) b)
+```
+
+> [!NOTE] Try evaluating the following terms yourself
+>
+> ```hs
+> (Not True)
+> ((Or False) True)
+> ((And True) False)
+> ```
+
+#### Numbers
+
+Natural numbers can be encoded using Church numerals:
+
+```hs
+Zero  = λf.λx.x
+One   = λf.λx.(f x)
+Two   = λf.λx.(f (f x))
+Three = λf.λx.(f (f (f x)))
+```
+
+And arithmetic operations:
+
+```hs
+Succ = λn.λf.λx.(f ((n f) x))
+Add  = λm.λn.λf.λx.((m f) ((n f) x))
+Mul  = λm.λn.λf.λx.((m (n f)) x)
+```
+
+> [!NOTE] Try evaluating the following terms yourself
+>
+> ```hs
+> (Succ Zero)
+> (Add One Two)
+> (Mul Two Three)
+> ```
+
 ## Usage
 
 Start a REPL by running the following command:
@@ -59,3 +111,22 @@ $$
 
 Where $M[x:=N]$ is the result of replacing all free occurrences of $x$ in the body of the abstraction $M$ with the argument expression $N$.
 The second fundamental operation is $α$-conversion ($(\lambda x.M[x])\rightarrow (\lambda y.M[y])$), which is the renaming of bound variables in an expression to avoid name collisions.
+
+## Extension
+
+The implementation is extended with variable assignments to terms.
+This allows for the definition of terms that can be used later in the evaluation of other terms using an environment $\Gamma$ mapping names to terms.
+
+```hs
+(((λx.x) (λx.x)) (λx.x))
+```
+
+Or with assignments:
+
+```hs
+Id = λx.x
+((Id Id) Id)
+```
+
+The term `Id` can now be used in other terms to simplify expressions.
+Both terms evaluate to `λx.x`.
