@@ -74,25 +74,37 @@ fn substitute(expr: &Expr, var: &str, value: &Expr) -> Expr {
     }
 }
 
+fn inline_variables(expr: Expr, env: &HashMap<String, Expr>) -> Expr {
+    match &expr {
+        Expr::Variable(v) => env.get(v).cloned().unwrap_or(expr),
+        Expr::Assignment(name, val) => {
+            Expr::Assignment(name.clone(), Box::new(inline_variables(*val.clone(), env)))
+        }
+        Expr::Abstraction(param, body) => Expr::Abstraction(
+            param.clone(),
+            Box::new(inline_variables(*body.clone(), env)),
+        ),
+        Expr::Application(f, x) => Expr::Application(
+            Box::new(inline_variables(*f.clone(), env)),
+            Box::new(inline_variables(*x.clone(), env)),
+        ),
+    }
+}
+
 fn eval(expr: &Expr, env: &mut HashMap<String, Expr>) -> Expr {
     match expr {
         Expr::Variable(v) => env.get(v).unwrap_or(expr).clone(),
         Expr::Assignment(name, val) => {
             let val = eval(val, env);
+            let val = inline_variables(val, env);
             env.insert(name.clone(), val.clone());
             val
         }
-        Expr::Abstraction(_, _) => expr.clone(),
+        Expr::Abstraction(p, b) => {
+            Expr::Abstraction(p.clone(), Box::new(inline_variables(*b.clone(), env)))
+        }
         Expr::Application(f, x) => match eval(f, env) {
-            // Expr::Abstraction(param, body) => {
-            //     let mut extended_env = env.clone();
-            //     extended_env.insert(param, eval(x, env));
-            //     eval(&body, &mut extended_env)
-            // }
-            Expr::Abstraction(param, body) => {
-                let substituted_body = substitute(&body, &param, x);
-                eval(&substituted_body, env)
-            }
+            Expr::Abstraction(param, body) => eval(&substitute(&body, &param, x), env),
             e => panic!("Expected lambda, found {:?}", e),
         },
     }
@@ -128,6 +140,10 @@ fn pretty_print(expr: &Expr) -> String {
 
 fn run(input: String, env: &mut HashMap<String, Expr>) {
     let exprs = parse_prog(input.replace("\r", "").trim());
+    let exprs = exprs
+        .into_iter()
+        .map(|e| inline_variables(e, env))
+        .collect::<Vec<_>>();
     println!(
         "{}",
         exprs
