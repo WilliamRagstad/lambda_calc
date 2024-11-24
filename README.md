@@ -5,25 +5,25 @@ It is extended with variable bindings to terms.
 
 ## Example
 
-```lisp
+```hs
 ((\x.(\x.x))x)
 ```
 
 Is a valid term that evaluates to `λx.x`.
 
-```lisp
+```hs
 (((λx.λy.x y) (λz.z)) (λw.w))
 ```
 
 Simply becomes `λw.w`.
 
-```lisp
+```hs
 ((λx.(x x)) (λx.(x x)))
 ```
 
 Is a non-terminating term.
 
-```list
+```hs
 f = λx.λy.x y
 g = λz.z
 h = λw.w
