@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 
+const DARK_GRAY: &str = "\x1b[90m";
+const YELLOW: &str = "\x1b[33m";
+const RESET: &str = "\x1b[0m";
 /// Lambda calculus parser using pest
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -111,31 +114,51 @@ fn eval(expr: &Expr, env: &mut HashMap<String, Expr>) -> Expr {
 }
 
 fn pretty_print(expr: &Expr) -> String {
-    match expr {
-        Expr::Variable(v) => v.clone(),
-        Expr::Assignment(name, val) => format!("{} = {};", name, pretty_print(val)),
-        Expr::Abstraction(param, body) => {
-            let body = if matches!(**body, Expr::Application(_, _)) {
-                format!("({})", pretty_print(body))
-            } else {
-                pretty_print(body)
-            };
-            format!("λ{}.{}", param, body)
-        }
-        Expr::Application(f, x) => {
-            let lhs = if matches!(**f, Expr::Variable(_)) {
-                pretty_print(f)
-            } else {
-                format!("({})", pretty_print(f))
-            };
-            let rhs = if matches!(**x, Expr::Variable(_)) {
-                pretty_print(x)
-            } else {
-                format!("({})", pretty_print(x))
-            };
-            format!("{} {}", lhs, rhs)
+    fn print_expr(expr: &Expr, top: bool) -> String {
+        match expr {
+            Expr::Variable(v) => v.clone(),
+            Expr::Assignment(name, val) => format!(
+                "{}{DARK_GRAY} = {RESET}{}{DARK_GRAY};{RESET}",
+                name,
+                print_expr(val, false)
+            ),
+            Expr::Abstraction(param, body) => {
+                let body = if matches!(**body, Expr::Application(_, _)) {
+                    format!(
+                        "{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}",
+                        print_expr(body, false)
+                    )
+                } else {
+                    print_expr(body, false)
+                };
+                format!("{YELLOW}λ{RESET}{}{DARK_GRAY}.{RESET}{}", param, body)
+            }
+            Expr::Application(f, x) => {
+                let lhs = if matches!(**f, Expr::Variable(_)) {
+                    print_expr(f, false)
+                } else {
+                    format!(
+                        "{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}",
+                        print_expr(f, false)
+                    )
+                };
+                let rhs = if matches!(**x, Expr::Variable(_)) {
+                    print_expr(x, false)
+                } else {
+                    format!(
+                        "{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}",
+                        print_expr(x, false)
+                    )
+                };
+                if top {
+                    format!("{DARK_GRAY}({RESET}{} {}{DARK_GRAY}){RESET}", lhs, rhs)
+                } else {
+                    format!("{} {}", lhs, rhs)
+                }
+            }
         }
     }
+    print_expr(expr, true)
 }
 
 fn run(input: String, env: &mut HashMap<String, Expr>) {
@@ -155,7 +178,10 @@ fn run(input: String, env: &mut HashMap<String, Expr>) {
     let mut exprs = exprs.into_iter();
     let first = exprs.next().expect("No expression found");
     let result = exprs.fold(eval(&first, env), |_, expr| eval(&expr, env));
-    println!("------------------\n{}", pretty_print(&result));
+    println!(
+        "{DARK_GRAY}------------------{RESET}\n{}\n",
+        pretty_print(&result)
+    );
 }
 
 fn main() {
@@ -172,7 +198,6 @@ fn main() {
             let mut input = String::new();
             std::io::stdin().read_line(&mut input).unwrap();
             run(input, &mut env);
-            println!();
         }
     }
 }
