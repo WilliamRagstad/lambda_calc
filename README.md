@@ -1,7 +1,7 @@
 # Untyped Lambda Calculus
 
 This is a simple implementation of the untyped [lambda calculus](https://en.wikipedia.org/wiki/Lambda_calculus) in Rust.
-It is extended with variable bindings to terms.
+It is extended with variable assignments to terms.
 
 ## Example
 
@@ -24,13 +24,13 @@ Simply becomes `λw.w`.
 Is a non-terminating term.
 
 ```hs
-f = λx.λy.x y
-g = λz.z
-h = λw.w
-((f g) h)
+F = λx.λy.(x y)
+G = λz.z
+H = λw.w
+((F G) H)
 ```
 
-Reduces to `λz.z`.
+Uses assignments to simplify the last term `(F G) H`, and reduces to `λz.z`.
 
 ## Usage
 
