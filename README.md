@@ -31,3 +31,17 @@ h = λw.w
 ```
 
 Reduces to `λz.z`.
+
+## Usage
+
+Start a REPL by running the following command:
+
+```bash
+./lambda_calc
+```
+
+Or run a file with lambda calculus terms:
+
+```bash
+./lambda_calc examples/identity.lc
+```
