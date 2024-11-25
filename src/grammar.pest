@@ -1,8 +1,8 @@
 WHITESPACE = _{ " " | "\t" | "\n" }
-program    = _{ SOI ~ ((assignment | expression) ~ ";"?)* ~ EOI }
+program    = _{ SOI ~ ((assignment | application | expression) ~ ";"?)* ~ EOI }
 assignment =  { variable ~ "=" ~ expression }
 // Lambda calculus
-expression  = _{ abstraction | application | variable | "(" ~ expression ~ ")" }
+expression  = _{ abstraction | "(" ~ application ~ ")" | variable | "(" ~ expression ~ ")" }
 abstraction =  { ("\\" | "λ") ~ variable ~ "." ~ expression }
-application =  { "(" ~ expression ~ expression ~ ")" }
-variable    = @{ ASCII_ALPHANUMERIC+ }
+application =  { expression ~ expression }
+variable    = @{ ASCII_ALPHANUMERIC+ ~ "'"* }

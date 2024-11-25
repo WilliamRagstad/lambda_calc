@@ -52,9 +52,9 @@ Or  = λa.λb.((a True) b)
 > [!NOTE] Try evaluating the following terms yourself
 >
 > ```hs
-> (Not True)
-> ((Or False) True)
-> ((And True) False)
+> Not True
+> (Or False) True
+> (And True) False
 > ```
 
 #### Numbers
@@ -62,10 +62,10 @@ Or  = λa.λb.((a True) b)
 Natural numbers can be encoded using Church numerals:
 
 ```hs
-Zero  = λf.λx.x
-One   = λf.λx.(f x)
-Two   = λf.λx.(f (f x))
-Three = λf.λx.(f (f (f x)))
+0 = λf.λx.x
+1 = λf.λx.(f x)
+2 = λf.λx.(f (f x))
+3 = λf.λx.(f (f (f x)))
 ```
 
 And arithmetic operations:
@@ -79,9 +79,9 @@ Mul  = λm.λn.λf.λx.((m (n f)) x)
 > [!NOTE] Try evaluating the following terms yourself
 >
 > ```hs
-> (Succ Zero)
-> (Add One Two)
-> (Mul Two Three)
+> Succ 0
+> (Add 1) 2
+> (Mul 2) 3
 > ```
 
 ## Usage
