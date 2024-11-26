@@ -190,10 +190,9 @@ fn eval(term: &Term, env: &mut HashMap<String, Term>, verbose: bool) -> Term {
     }
     // Do the actual work
     if let Term::Assignment(name, val) = term {
-        if verbose {
-            println!("{}", pretty_print(val));
-        }
-        let val = reduce_to_normal_form(val, verbose);
+        // Explicitly DON'T apply beta reduction here!
+        // We want recursive combinators to not be evaluated until they are used
+        let val = *val.clone();
         env.insert(name.clone(), val.clone());
         val
     } else {
