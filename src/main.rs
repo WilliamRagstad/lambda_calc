@@ -1,6 +1,7 @@
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},
+    io,
 };
 
 use pest::{iterators::Pair, Parser};
@@ -10,6 +11,8 @@ mod test;
 
 const DARK_GRAY: &str = "\x1b[90m";
 const YELLOW: &str = "\x1b[33m";
+const CYAN: &str = "\x1b[36m";
+const RED: &str = "\x1b[31m";
 const RESET: &str = "\x1b[0m";
 /// Lambda calculus parser using pest
 #[derive(Parser)]
@@ -240,9 +243,19 @@ fn run(input: String, env: &mut HashMap<String, Term>, verbose: bool) {
 
 /// Pretty print a term
 fn pretty_print(term: &Term) -> String {
+    fn print_var(v: &str) -> String {
+        match v.to_ascii_lowercase().as_str() {
+            "true" => format!("{CYAN}true{RESET}"),
+            "false" => format!("{CYAN}false{RESET}"),
+            func if char::is_uppercase(func.chars().next().unwrap()) => {
+                format!("{RED}{}{RESET}", v)
+            }
+            _ => v.to_string(),
+        }
+    }
     fn print_term(term: &Term, top: bool) -> String {
         match term {
-            Term::Variable(v) => v.clone(),
+            Term::Variable(v) => print_var(v),
             Term::Assignment(name, val) => format!(
                 "{}{DARK_GRAY} = {RESET}{}{DARK_GRAY};{RESET}",
                 name,
@@ -257,7 +270,11 @@ fn pretty_print(term: &Term) -> String {
                 } else {
                     print_term(body, false)
                 };
-                format!("{YELLOW}λ{RESET}{}{DARK_GRAY}.{RESET}{}", param, body)
+                format!(
+                    "{YELLOW}λ{RESET}{}{DARK_GRAY}.{RESET}{}",
+                    print_var(param),
+                    body
+                )
             }
             Term::Application(f, x) => {
                 let lhs = if matches!(**f, Term::Variable(_)) {
@@ -314,6 +331,42 @@ fn main() {
             std::io::stdout().flush().unwrap();
             let mut input = String::new();
             std::io::stdin().read_line(&mut input).unwrap();
+            let args: Vec<&str> = input.trim().split(' ').collect::<Vec<&str>>();
+            match *args.first().unwrap_or(&"") {
+                ":q" | ":quit" => break,
+                ":env" => {
+                    for (name, term) in &env {
+                        println!("{} = {}", name, pretty_print(term));
+                    }
+                    continue;
+                }
+                ":clear" => {
+                    env.clear();
+                    continue;
+                }
+                ":load" => {
+                    let Some(file) = args.get(1) else {
+                        eprintln!("Usage: :load <file>");
+                        continue;
+                    };
+                    if let io::Result::Ok(content) = std::fs::read_to_string(file) {
+                        run(content, &mut env, verbose);
+                    } else {
+                        eprintln!("Error reading file");
+                    }
+                    continue;
+                }
+                ":help" => {
+                    println!("Commands:");
+                    println!("  :q, :quit      Quit the program");
+                    println!("  :env           Print the current environment");
+                    println!("  :clear         Clear the current environment");
+                    println!("  :load <file>   Load a file into the environment");
+                    println!("  :help          Print this help message");
+                    continue;
+                }
+                _ => {}
+            }
             run(input, &mut env, verbose);
         }
     }

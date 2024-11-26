@@ -80,6 +80,8 @@ Imagine `f` as an action like "take a step forward," and `x` as your starting po
 1 = λf.λx.(f x)
 2 = λf.λx.(f (f x))
 3 = λf.λx.(f (f (f x)))
+4 = λf.λx.(f (f (f (f x))))
+5 = λf.λx.(f (f (f (f (f x)))))
 ```
 
 And arithmetic operations:
@@ -112,6 +114,16 @@ Mul  = λm.λn.λf.λx.((m (n f)) x)
 > λf.λx.(f ((λx.(f (f x))) x))
 > λf.λx.(f (f (f x))) -- Result = 3
 > ```
+
+## Comparison
+
+Comparison can be implemented using the Church encoding of natural numbers.
+The `IsZero` function checks if a number is zero, and the `Eq` function checks if two numbers are equal.
+
+```hs
+IsZero = λn.((n λx.False) True)
+Eq     = λm.λn.((And (IsZero ((Add m) n))) (IsZero ((Add n) m)))
+```
 
 ## Combinators
 
@@ -189,3 +201,10 @@ Id = λx.x
 
 The term `Id` can now be used in other terms to simplify expressions.
 Both terms evaluate to `λx.x`.
+
+The REPL also has commands to load files and display the current environment.
+
+```bash
+> :load examples/identity.lc
+> :env
+```
