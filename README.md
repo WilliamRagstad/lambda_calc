@@ -110,7 +110,7 @@ $$
 $$
 
 Where $M[x:=N]$ is the result of replacing all free occurrences of $x$ in the body of the abstraction $M$ with the argument expression $N$.
-The second fundamental operation is $α$-conversion ($(\lambda x.M[x])\rightarrow (\lambda y.M[y])$), which is the renaming of bound variables in an expression to avoid name collisions.
+The second fundamental operation is $α$-conversion ($`(\lambda x.M[x]) \rightarrow (\lambda y.M[y])`$), which is the renaming of bound variables in an expression to avoid name collisions.
 
 ## Extension
 
