@@ -17,6 +17,8 @@ const RESET: &str = "\x1b[0m";
 struct LambdaCalcParser;
 
 /// AST for lambda calculus
+///
+/// See https://en.wikipedia.org/wiki/Lambda_calculus#Definition.
 #[derive(Debug, Clone, PartialEq)]
 enum Term {
     Variable(String),
@@ -83,8 +85,11 @@ fn substitute(term: &Term, var: &str, value: &Term) -> Term {
         Term::Abstraction(s, _) if s == var => term.clone(), // Bound variable, no substitution needed
         // (λx. e)[var := value] = λx. e  (x in free_vars(value))
         Term::Abstraction(s, body) if free_vars(value).contains(s) => {
-            // Avoid variable capture by renaming
-            let s_new = fresh_var(s);
+            // Avoid variable capture collisions by generating a fresh variable name
+            let mut s_new = s.clone();
+            while free_vars(value).contains(&s_new) {
+                s_new.push('\'');
+            }
             let new_body = substitute(&rename_var(body, s, &s_new), var, value);
             Term::Abstraction(s_new, Box::new(new_body))
         }
@@ -124,29 +129,19 @@ fn free_vars(term: &Term) -> HashSet<String> {
     }
 }
 
-// Generate a fresh variable name to avoid name collisions
-fn fresh_var(s: &str) -> String {
-    format!("{}'", s)
-}
-
 // Rename a variable in a term
 fn rename_var(term: &Term, old_var: &str, new_var: &str) -> Term {
     match term {
-        Term::Variable(s) => {
-            if s == old_var {
-                Term::Variable(new_var.to_string())
-            } else {
-                Term::Variable(s.clone())
-            }
-        }
+        Term::Variable(s) if s == old_var => Term::Variable(new_var.to_string()),
+        Term::Variable(_) => term.clone(),
+        Term::Abstraction(s, body) if s == old_var => Term::Abstraction(
+            new_var.to_string(),
+            Box::new(rename_var(body, old_var, new_var)),
+        ),
         Term::Abstraction(s, body) => {
-            let param = if s == old_var {
-                new_var.to_string()
-            } else {
-                s.clone()
-            };
-            Term::Abstraction(param, Box::new(rename_var(body, old_var, new_var)))
+            Term::Abstraction(s.clone(), Box::new(rename_var(body, old_var, new_var)))
         }
+
         Term::Application(e1, e2) => Term::Application(
             Box::new(rename_var(e1, old_var, new_var)),
             Box::new(rename_var(e2, old_var, new_var)),
