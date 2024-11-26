@@ -21,7 +21,7 @@ Simply becomes `λw.w`.
 ((λx.(x x)) (λx.(x x)))
 ```
 
-Is a non-terminating term.
+The above term is called the Omega combinator and reduces to itself. Resulting in a non-terminating term.
 
 ```hs
 F = λx.λy.(x y)
