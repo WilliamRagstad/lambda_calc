@@ -37,9 +37,11 @@ Uses assignments to simplify the last term `(F G) H`, and reduces to `λz.z`.
 Boolean logic can be encoded using Church booleans:
 
 ```hs
-True  = λx.λy.x
-False = λx.λy.y
+True  = λtrue.λfalse.true
+False = λtrue.λfalse.false
 ```
+
+Here the parameter names `true` and `false` are used to represent the two possible outcomes of a logical operation, and does not have any meaning beyond that.
 
 And logical operations:
 
@@ -59,7 +61,8 @@ Or  = λa.λb.((a True) b)
 
 #### Numbers
 
-Natural numbers can be encoded using Church numerals:
+Natural numbers can be encoded using Church numerals as shown below.
+Imagine `f` as an action like "take a step forward," and `x` as your starting position on a number line.
 
 ```hs
 0 = λf.λx.x
@@ -92,7 +95,7 @@ Start a REPL by running the following command:
 ./lambda_calc
 ```
 
-Or run a file with lambda calculus terms:
+Run a file:
 
 ```bash
 ./lambda_calc examples/identity.lc
@@ -121,7 +124,7 @@ This allows for the definition of terms that can be used later in the evaluation
 (((λx.x) (λx.x)) (λx.x))
 ```
 
-Or with assignments:
+Or the same with assignments:
 
 ```hs
 Id = λx.x
