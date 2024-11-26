@@ -2,11 +2,11 @@
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{parse_prog, run, Expr};
+    use crate::{eval, parse_prog, Expr};
 
     #[test]
     fn test_parse() {
-        let input = "x = y; λx. x y; x y;";
+        let input = "x = y; λx. (x y); x y;";
         let exprs = parse_prog(input);
         assert_eq!(
             &exprs,
@@ -55,7 +55,17 @@ mod tests {
     #[test]
     fn test_eval() {
         let mut env = HashMap::new();
-        let input = "x = y; λx. x y; x y;";
-        run(input.to_string(), &mut env);
+        let input = "x = λx. (x y); x y;";
+        let exprs = parse_prog(input);
+        let mut exprs = exprs.into_iter();
+        let first = exprs.next().expect("No expression found");
+        let result = exprs.fold(eval(&first, &mut env), |_, expr| eval(&expr, &mut env));
+        assert_eq!(
+            result,
+            Expr::Application(
+                Box::new(Expr::Variable("y".to_string())),
+                Box::new(Expr::Variable("y".to_string()))
+            )
+        );
     }
 }
