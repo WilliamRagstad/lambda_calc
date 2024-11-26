@@ -58,8 +58,10 @@ mod tests {
         let input = "x = λx. (x y); x y;";
         let terms = parse_prog(input);
         let mut terms = terms.into_iter();
-        let first = terms.next().expect("No termession found");
-        let result = terms.fold(eval(&first, &mut env), |_, term| eval(&term, &mut env));
+        let first = terms.next().expect("No terms found");
+        let result = terms.fold(eval(&first, &mut env, false), |_, term| {
+            eval(&term, &mut env, false)
+        });
         assert_eq!(
             result,
             Term::Application(
