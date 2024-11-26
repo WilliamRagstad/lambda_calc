@@ -51,7 +51,8 @@ And = λa.λb.((a b) False)
 Or  = λa.λb.((a True) b)
 ```
 
-> [!NOTE] Try evaluating the following terms yourself
+> [!NOTE]
+> Try evaluating the following terms yourself
 >
 > ```hs
 > Not True
@@ -79,7 +80,8 @@ Add  = λm.λn.λf.λx.((m f) ((n f) x))
 Mul  = λm.λn.λf.λx.((m (n f)) x)
 ```
 
-> [!NOTE] Try evaluating the following terms yourself
+> [!NOTE]
+> Try evaluating the following terms yourself
 >
 > ```hs
 > Succ 0
