@@ -55,9 +55,10 @@ Here the parameter names `true` and `false` are used to represent the two possib
 And logical operations:
 
 ```hs
-Not = λb.((b False) True)
+Not = λa.((a False) True)
 And = λa.λb.((a b) False)
 Or  = λa.λb.((a True) b)
+If  = λa.λt.λf.((a t) f)
 ```
 
 > [!NOTE]
@@ -96,6 +97,7 @@ Mul  = λm.λn.λf.λx.((m (n f)) x)
 > Succ 0
 > (Add 1) 2
 > (Mul 2) 3
+> ((If True) 2) 3
 > ```
 
 > [!TIP]
