@@ -66,27 +66,32 @@ fn parse_prog(input: &str) -> Vec<Expr> {
 
 /// Substitute a variable in an expression with another expression
 /// This is used for beta reduction.
+///
+/// See https://en.wikipedia.org/wiki/Lambda_calculus#Substitution.
 fn substitute(expr: &Expr, var: &str, value: &Expr) -> Expr {
     match expr {
+        // var[var := value] = value
         Expr::Variable(v) if v == var => value.clone(),
+        // x[var := value] = x   (x != var)
         Expr::Variable(_) => expr.clone(),
+        // (e1 e2)[var := value] = (e1[var := value]) (e2[var := value])
+        Expr::Application(e1, e2) => Expr::Application(
+            Box::new(substitute(e1, var, value)),
+            Box::new(substitute(e2, var, value)),
+        ),
+        // (λx. e)[var := value] = λx. e  (x == var)
         Expr::Abstraction(s, _) if s == var => expr.clone(), // Bound variable, no substitution needed
+        // (λx. e)[var := value] = λx. e  (x in free_vars(value))
         Expr::Abstraction(s, body) if free_vars(value).contains(s) => {
             // Avoid variable capture by renaming
             let s_new = fresh_var(s);
             let new_body = substitute(&rename_var(body, s, &s_new), var, value);
             Expr::Abstraction(s_new, Box::new(new_body))
         }
+        // (λx. e)[var := value] = λx. e[var := value]  (x != var and x not in free_vars(value))
         Expr::Abstraction(s, body) => {
             // Substitute inside the abstraction's body
             Expr::Abstraction(s.clone(), Box::new(substitute(body, var, value)))
-        }
-        Expr::Application(e1, e2) => {
-            // Substitute in both function and argument parts
-            Expr::Application(
-                Box::new(substitute(e1, var, value)),
-                Box::new(substitute(e2, var, value)),
-            )
         }
         _ => unreachable!(),
     }
