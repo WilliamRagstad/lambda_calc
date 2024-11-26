@@ -55,8 +55,14 @@ fn parse_prog(input: &str) -> Vec<Term> {
         }
     }
 
-    let pairs = LambdaCalcParser::parse(Rule::program, input).unwrap_or_else(|e| panic!("{}", e));
     let mut terms = Vec::new();
+    let pairs = match LambdaCalcParser::parse(Rule::program, input) {
+        Ok(pairs) => pairs,
+        Err(e) => {
+            eprintln!("{}", e);
+            return terms;
+        }
+    };
     for pair in pairs {
         if let Rule::EOI = pair.as_rule() {
             break;
@@ -256,32 +262,51 @@ fn pretty_print(term: &Term) -> String {
 }
 
 /// Run the given input program in the given environment
-fn run(input: String, env: &mut HashMap<String, Term>) {
+fn run(input: String, env: &mut HashMap<String, Term>, verbose: bool) {
     let terms = parse_prog(input.replace("\r", "").trim());
-    println!(
-        "{}",
-        terms
-            .iter()
-            .map(|e| inline_vars(e, env))
-            .map(|e| pretty_print(&e))
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
+    if terms.is_empty() {
+        return;
+    }
+    if verbose {
+        println!(
+            "{}",
+            terms
+                .iter()
+                .map(|e| inline_vars(e, env))
+                .map(|e| pretty_print(&e))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+    }
     let mut terms = terms.into_iter();
     let first = terms.next().expect("No term found");
     let result = terms.fold(eval(&first, env), |_, term| eval(&term, env));
-    println!(
-        "{DARK_GRAY}------------------{RESET}\n{}\n",
-        pretty_print(&result)
-    );
+    if verbose {
+        println!("{DARK_GRAY}------------------{RESET}\n");
+    }
+    println!("{}", pretty_print(&result));
 }
 
 fn main() {
     let mut env = HashMap::new();
     // If one argument is given, read that file, otherwise run REPL
-    let args: Vec<String> = std::env::args().collect();
+    let mut args: Vec<String> = std::env::args().collect();
+    // Remove --verbose flag if present
+    let mut verbose = false;
+    args.retain(|x| {
+        match x.as_str() {
+            "--help" | "-h" => help(),
+            "--verbose" | "-v" => verbose = true,
+            _ => return true,
+        }
+        false
+    });
     if args.len() == 2 {
-        run(std::fs::read_to_string(&args[1]).unwrap(), &mut env);
+        run(
+            std::fs::read_to_string(&args[1]).unwrap(),
+            &mut env,
+            verbose,
+        );
     } else {
         use std::io::Write;
         loop {
@@ -289,7 +314,20 @@ fn main() {
             std::io::stdout().flush().unwrap();
             let mut input = String::new();
             std::io::stdin().read_line(&mut input).unwrap();
-            run(input, &mut env);
+            run(input, &mut env, verbose);
         }
     }
+}
+
+fn help() -> ! {
+    println!("Lambda calculus interpreter");
+    println!("Usage: lambda [options] [file]");
+    println!();
+    println!("Options:");
+    println!("  -h, --help     Print this help message");
+    println!("  -v, --verbose  Print debug information");
+    println!("  [file]         File to read lambda calculus program from");
+    println!();
+    println!("If no file is given, the program will run in REPL mode");
+    std::process::exit(0);
 }
