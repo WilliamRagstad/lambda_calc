@@ -65,7 +65,7 @@ fn parse_prog(input: &str) -> Vec<Term> {
 }
 
 /// Substitute a variable in a term with another term
-/// This is used in beta reduction.
+/// This is used in β-reduction.
 ///
 /// See https://en.wikipedia.org/wiki/Lambda_calculus#Substitution.
 fn substitute(term: &Term, var: &str, value: &Term) -> Term {
