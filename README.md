@@ -3,13 +3,22 @@
 This is a simple implementation of the untyped [lambda calculus](https://en.wikipedia.org/wiki/Lambda_calculus) in Rust.
 It is extended with variable assignments to terms.
 
+## Usage
+
+```bash
+./lambda_calc                        # Start REPL
+./lambda_calc examples/identity.lc   # Run a file
+```
+
+To display more detailed information, use `--help`.
+
 ## Example
 
 ```hs
-((\x.(\x.x))x)
+(\x.\x.x) x
 ```
 
-Is a valid term that evaluates to `λx.x`.
+Is a valid term that evaluates to `λx.x` by applying the identity function `λx.λx.x` to the argument `x`.
 
 ```hs
 (((λx.λy.x y) (λz.z)) (λw.w))
@@ -32,7 +41,7 @@ H = λw.w
 
 Uses assignments to simplify the last term `(F G) H`, and reduces to `λz.z`.
 
-### Data Encoding
+## Boolean Logic
 
 Boolean logic can be encoded using Church booleans:
 
@@ -60,7 +69,7 @@ Or  = λa.λb.((a True) b)
 > (And True) False
 > ```
 
-#### Numbers
+## Arithmetics
 
 Natural numbers can be encoded using Church numerals as shown below.
 Imagine `f` as an action like "take a step forward," and `x` as your starting position on a number line.
@@ -89,19 +98,6 @@ Mul  = λm.λn.λf.λx.((m (n f)) x)
 > (Mul 2) 3
 > ```
 
-## Usage
-
-Start a REPL by running the following command:
-
-```bash
-./lambda_calc
-```
-
-Run a file:
-
-```bash
-./lambda_calc examples/identity.lc
-```
 
 ## Fundamentals
 
