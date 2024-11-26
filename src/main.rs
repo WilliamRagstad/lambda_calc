@@ -163,7 +163,7 @@ fn beta_reduce(term: &Term) -> Term {
         Term::Abstraction(var, body) => Term::Abstraction(var.clone(), Box::new(beta_reduce(body))),
         Term::Application(e1, e2) => {
             if let Term::Abstraction(var, body) = e1.borrow() {
-                beta_reduce(&substitute(body, var, e2))
+                substitute(body, var, e2)
             } else {
                 Term::Application(Box::new(beta_reduce(e1)), Box::new(beta_reduce(e2)))
             }
@@ -174,8 +174,8 @@ fn beta_reduce(term: &Term) -> Term {
 
 /// Evaluate a term in the given environment
 /// by applying beta reduction until the term is in normal form
-fn eval(term: &Term, env: &mut HashMap<String, Term>) -> Term {
-    fn reduce_to_normal_form(term: &Term) -> Term {
+fn eval(term: &Term, env: &mut HashMap<String, Term>, verbose: bool) -> Term {
+    fn reduce_to_normal_form(term: &Term, verbose: bool) -> Term {
         let mut term = term.clone();
         loop {
             let next = beta_reduce(&term);
@@ -183,16 +183,24 @@ fn eval(term: &Term, env: &mut HashMap<String, Term>) -> Term {
                 return term;
             }
             term = next;
+            if verbose {
+                println!("{}", pretty_print(&term));
+            }
         }
     }
     // Do the actual work
-    let term = inline_vars(term, env);
     if let Term::Assignment(name, val) = term {
-        let val = reduce_to_normal_form(&val);
+        if verbose {
+            println!("{}", pretty_print(val));
+        }
+        let val = reduce_to_normal_form(val, verbose);
         env.insert(name.clone(), val.clone());
         val
     } else {
-        reduce_to_normal_form(&term)
+        if verbose {
+            println!("{}", pretty_print(term));
+        }
+        reduce_to_normal_form(term, verbose)
     }
 }
 
@@ -209,6 +217,25 @@ fn inline_vars(term: &Term, env: &HashMap<String, Term>) -> Term {
         Term::Application(f, x) => {
             Term::Application(Box::new(inline_vars(f, env)), Box::new(inline_vars(x, env)))
         }
+    }
+}
+
+/// Run the given input program in the given environment
+fn run(input: String, env: &mut HashMap<String, Term>, verbose: bool) {
+    let terms = parse_prog(input.replace("\r", "").trim());
+    if terms.is_empty() {
+        return;
+    }
+    let mut result = terms[0].clone();
+    for (i, term) in terms.iter().enumerate() {
+        let term = inline_vars(term, env);
+        result = eval(&term, env, verbose);
+        if verbose && i < terms.len() - 1 {
+            println!("{DARK_GRAY}------------------{RESET}");
+        }
+    }
+    if !verbose {
+        println!("{}", pretty_print(&result));
     }
 }
 
@@ -259,32 +286,6 @@ fn pretty_print(term: &Term) -> String {
         }
     }
     print_term(term, true)
-}
-
-/// Run the given input program in the given environment
-fn run(input: String, env: &mut HashMap<String, Term>, verbose: bool) {
-    let terms = parse_prog(input.replace("\r", "").trim());
-    if terms.is_empty() {
-        return;
-    }
-    if verbose {
-        println!(
-            "{}",
-            terms
-                .iter()
-                .map(|e| inline_vars(e, env))
-                .map(|e| pretty_print(&e))
-                .collect::<Vec<_>>()
-                .join("\n")
-        );
-    }
-    let mut terms = terms.into_iter();
-    let first = terms.next().expect("No term found");
-    let result = terms.fold(eval(&first, env), |_, term| eval(&term, env));
-    if verbose {
-        println!("{DARK_GRAY}------------------{RESET}\n");
-    }
-    println!("{}", pretty_print(&result));
 }
 
 fn main() {
