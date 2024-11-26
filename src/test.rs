@@ -2,26 +2,26 @@
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{eval, parse_prog, Expr};
+    use crate::{eval, parse_prog, Term};
 
     #[test]
     fn test_parse() {
         let input = "x = y; λx. (x y); x y;";
-        let exprs = parse_prog(input);
+        let terms = parse_prog(input);
         assert_eq!(
-            &exprs,
+            &terms,
             &[
-                Expr::Assignment("x".to_string(), Box::new(Expr::Variable("y".to_string()))),
-                Expr::Abstraction(
+                Term::Assignment("x".to_string(), Box::new(Term::Variable("y".to_string()))),
+                Term::Abstraction(
                     "x".to_string(),
-                    Box::new(Expr::Application(
-                        Box::new(Expr::Variable("x".to_string())),
-                        Box::new(Expr::Variable("y".to_string()))
+                    Box::new(Term::Application(
+                        Box::new(Term::Variable("x".to_string())),
+                        Box::new(Term::Variable("y".to_string()))
                     ))
                 ),
-                Expr::Application(
-                    Box::new(Expr::Variable("x".to_string())),
-                    Box::new(Expr::Variable("y".to_string()))
+                Term::Application(
+                    Box::new(Term::Variable("x".to_string())),
+                    Box::new(Term::Variable("y".to_string()))
                 )
             ]
         );
@@ -30,21 +30,21 @@ mod tests {
     #[test]
     fn test_multi_app() {
         let input = "λx. λy. λz. ((x y) z);";
-        let exprs = parse_prog(input);
+        let terms = parse_prog(input);
         assert_eq!(
-            &exprs,
-            &[Expr::Abstraction(
+            &terms,
+            &[Term::Abstraction(
                 "x".to_string(),
-                Box::new(Expr::Abstraction(
+                Box::new(Term::Abstraction(
                     "y".to_string(),
-                    Box::new(Expr::Abstraction(
+                    Box::new(Term::Abstraction(
                         "z".to_string(),
-                        Box::new(Expr::Application(
-                            Box::new(Expr::Application(
-                                Box::new(Expr::Variable("x".to_string())),
-                                Box::new(Expr::Variable("y".to_string()))
+                        Box::new(Term::Application(
+                            Box::new(Term::Application(
+                                Box::new(Term::Variable("x".to_string())),
+                                Box::new(Term::Variable("y".to_string()))
                             )),
-                            Box::new(Expr::Variable("z".to_string()))
+                            Box::new(Term::Variable("z".to_string()))
                         ))
                     ))
                 ))
@@ -56,15 +56,15 @@ mod tests {
     fn test_eval() {
         let mut env = HashMap::new();
         let input = "x = λx. (x y); x y;";
-        let exprs = parse_prog(input);
-        let mut exprs = exprs.into_iter();
-        let first = exprs.next().expect("No expression found");
-        let result = exprs.fold(eval(&first, &mut env), |_, expr| eval(&expr, &mut env));
+        let terms = parse_prog(input);
+        let mut terms = terms.into_iter();
+        let first = terms.next().expect("No termession found");
+        let result = terms.fold(eval(&first, &mut env), |_, term| eval(&term, &mut env));
         assert_eq!(
             result,
-            Expr::Application(
-                Box::new(Expr::Variable("y".to_string())),
-                Box::new(Expr::Variable("y".to_string()))
+            Term::Application(
+                Box::new(Term::Variable("y".to_string())),
+                Box::new(Term::Variable("y".to_string()))
             )
         );
     }
