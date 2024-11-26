@@ -97,35 +97,24 @@ fn substitute(expr: &Expr, var: &str, value: &Expr) -> Expr {
     }
 }
 
-/// Inline variables in an expression using the given environment
-fn inline_vars(expr: &Expr, env: &HashMap<String, Expr>) -> Expr {
-    match &expr {
-        Expr::Variable(v) => env.get(v).cloned().unwrap_or(expr.clone()),
-        Expr::Assignment(name, val) => {
-            Expr::Assignment(name.clone(), Box::new(inline_vars(val, env)))
-        }
-        Expr::Abstraction(param, body) => {
-            Expr::Abstraction(param.clone(), Box::new(inline_vars(body, env)))
-        }
-        Expr::Application(f, x) => {
-            Expr::Application(Box::new(inline_vars(f, env)), Box::new(inline_vars(x, env)))
-        }
-    }
-}
-
-// Collect free variables in an expression
+/// Collect free variables in an expression
+///
+/// See https://en.wikipedia.org/wiki/Lambda_calculus#Free_and_bound_variables.
 fn free_vars(expr: &Expr) -> HashSet<String> {
     match expr {
+        // free_vars(x) = {x}
         Expr::Variable(s) => {
             let mut set = HashSet::new();
             set.insert(s.clone());
             set
         }
+        // free_vars(λx. e) = free_vars(e) - {x}
         Expr::Abstraction(s, body) => {
             let mut set = free_vars(body);
             set.remove(s);
             set
         }
+        // free_vars(e1 e2) = free_vars(e1) + free_vars(e2)
         Expr::Application(e1, e2) => {
             let mut set = free_vars(e1);
             set.extend(free_vars(e2));
@@ -203,6 +192,22 @@ fn eval(expr: &Expr, env: &mut HashMap<String, Expr>) -> Expr {
         val
     } else {
         reduce_to_normal_form(&expr)
+    }
+}
+
+/// Inline variables in an expression using the given environment
+fn inline_vars(expr: &Expr, env: &HashMap<String, Expr>) -> Expr {
+    match &expr {
+        Expr::Variable(v) => env.get(v).cloned().unwrap_or(expr.clone()),
+        Expr::Assignment(name, val) => {
+            Expr::Assignment(name.clone(), Box::new(inline_vars(val, env)))
+        }
+        Expr::Abstraction(param, body) => {
+            Expr::Abstraction(param.clone(), Box::new(inline_vars(body, env)))
+        }
+        Expr::Application(f, x) => {
+            Expr::Application(Box::new(inline_vars(f, env)), Box::new(inline_vars(x, env)))
+        }
     }
 }
 
