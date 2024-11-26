@@ -98,6 +98,18 @@ Mul  = λm.λn.λf.λx.((m (n f)) x)
 > (Mul 2) 3
 > ```
 
+> [!TIP]
+> Use the `--verbose` flag to see the evaluation steps.
+>
+> ```hs
+> > (Add 1) 2
+> (((λm.λn.λf.λx.((m f) ((n f) x))) (λf.λx.(f x))) (λf.λx.(f (f x))))
+> ((λn.λf.λx.(((λf.λx.(f x)) f) ((n f) x))) (λf.λx.(f (f x))))
+> λf.λx.(((λf.λx.(f x)) f) (((λf.λx.(f (f x))) f) x))
+> λf.λx.((λx.(f x)) ((λx.(f (f x))) x))
+> λf.λx.(f ((λx.(f (f x))) x))
+> λf.λx.(f (f (f x))) -- Result = 3
+> ```
 
 ## Fundamentals
 
