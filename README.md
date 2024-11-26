@@ -113,6 +113,50 @@ Mul  = λm.λn.λf.λx.((m (n f)) x)
 > λf.λx.(f (f (f x))) -- Result = 3
 > ```
 
+## Combinators
+
+Combinators are lambda terms that do not have free variables.
+Common fixed-point combinators include: identity `I`, substitution `S`, constant `K`, mockingbird `M`, omega `O`, and `Y`, among others.
+
+```hs
+I = λx.x
+S = λx.λy.λz.((x z) (y z))
+K = λx.λy.x
+M = λf.((f f) f)
+O = λx.(x x)
+Y = λf.((λx.(f (x x)) λx.(f (x x))))
+```
+
+> [!NOTE]
+> Try evaluating the following terms yourself
+>
+> ```hs
+> ((S K) K) I -- Result = I
+> (M M) M     -- Result = Non-terminating
+> ```
+
+## Recursion
+
+Recursion can be implemented using the Y combinator, which is a fixed-point combinator that allows for the definition of recursive functions.
+The Y combinator is defined as follows:
+
+```hs
+Y = λf.((λx.(f (x x)) λx.(f (x x))))
+```
+
+The Y combinator can be used to define recursive functions as shown below:
+
+```hs
+Fact = (Y (λf.λn.(((If (IsZero n)) 1) ((Mul n) (f (Pred n))))))
+```
+
+Where `IsZero` and `Pred` are defined as:
+
+```hs
+IsZero = λn.((n λx.False) True)
+Pred   = λn.((n (λp.λz.z ((Add p) 0))) 0)
+```
+
 ## Fundamentals
 
 The lambda calculus is a formal system for expressing computation based on function abstraction and application using variable bindings.
