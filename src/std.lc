@@ -1,3 +1,5 @@
+-- Data Types
+
 True   = λtrue.λfalse.true;
 False  = λtrue.λfalse.false;
 Not    = λa.((a False) True);
@@ -22,4 +24,24 @@ Eq     = λm.λn.((And (IsZero ((Add m) n))) (IsZero ((Add n) m)));
 21 = Succ 20; 22 = Succ 21; 23 = Succ 22; 24 = Succ 23; 25 = Succ 24;
 26 = Succ 25; 27 = Succ 26; 28 = Succ 27; 29 = Succ 28; 30 = Succ 29;
 
+-- Data Structures
+
+Pair = λa.λb.λf.((f a) b);
+Fst  = λp.(p True);
+Snd  = λp.(p False);
+
+Nil  = Pair True True;
+Cons = λh.λt.(Pair False (Pair h t));
+Head = λl.(Fst (Snd l));
+Tail = λl.(Snd (Snd l));
+IsEmpty = λl.(Fst l);
+
+Map = λf.λl.((IsEmpty l) Nil) (Cons (f (Head l)) (Map f (Tail l)));
+Fold = λf.λa.λl.((IsEmpty l) a) (f (Head l) (Fold f a (Tail l)));
+Range = λm.λn.((Eq m n) (Cons m Nil)) (Cons m (Range (Succ m) n));
+
+-- Standard Library Functions
+
+Pred = λn.((Fst (n λp.(Pair (Snd p) (Succ (Snd p)))) (Pair 0 0)));
 Fact = λn.((((If (IsZero n)) 1) ((Mul n) (Fact (Succ (Pred n))))));
+Fib  = λn.((If (IsZero n)) 0) (((If ((Eq n 1)) 1) ((Add (Fib (Pred n)) (Fib (Pred (Pred n)))))));
