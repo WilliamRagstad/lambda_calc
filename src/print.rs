@@ -35,26 +35,14 @@ pub fn term(t: &Term) -> String {
     match t {
         Term::Variable(v) => var(v),
         Term::Abstraction(param, body) => {
-            let body = if matches!(**body, Term::Application(_, _)) {
-                format!("{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}", term(body))
-            } else {
-                term(body)
-            };
+            let body = term(body);
             format!("{YELLOW}λ{RESET}{}{DARK_GRAY}.{RESET}{}", var(param), body)
         }
-        Term::Application(f, x) => {
-            let lhs = if matches!(**f, Term::Variable(_)) {
-                term(f)
-            } else {
-                format!("{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}", term(f))
-            };
-            let rhs = if matches!(**x, Term::Variable(_)) {
-                term(x)
-            } else {
-                format!("{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}", term(x))
-            };
-            format!("{DARK_GRAY}({RESET}{} {}{DARK_GRAY}){RESET}", lhs, rhs)
-        }
+        Term::Application(f, x) => format!(
+            "{DARK_GRAY}({RESET}{} {}{DARK_GRAY}){RESET}",
+            term(f),
+            term(x)
+        ),
     }
 }
 
