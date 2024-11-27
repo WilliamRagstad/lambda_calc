@@ -2,7 +2,10 @@
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{eval_expr, inline_vars, parse_prog, Expr, Term};
+    use crate::{
+        eval::{eval_expr, inline_vars},
+        parser::{parse_prog, Expr, Term},
+    };
 
     impl Expr {
         fn term(&self) -> &Term {
