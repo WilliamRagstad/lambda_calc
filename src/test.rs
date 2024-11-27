@@ -2,7 +2,16 @@
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{eval, parse_prog, Term};
+    use crate::{eval_expr, inline_vars, parse_prog, Expr, Term};
+
+    impl Expr {
+        fn term(&self) -> &Term {
+            match self {
+                Expr::Assignment(_, term) => term,
+                Expr::Term(term) => term,
+            }
+        }
+    }
 
     #[test]
     fn test_parse() {
@@ -11,18 +20,18 @@ mod tests {
         assert_eq!(
             &terms,
             &[
-                Term::Assignment("x".to_string(), Box::new(Term::Variable("y".to_string()))),
-                Term::Abstraction(
+                Expr::Assignment("x".to_string(), Term::Variable("y".to_string())),
+                Expr::Term(Term::Abstraction(
                     "x".to_string(),
                     Box::new(Term::Application(
                         Box::new(Term::Variable("x".to_string())),
                         Box::new(Term::Variable("y".to_string()))
                     ))
-                ),
-                Term::Application(
+                )),
+                Expr::Term(Term::Application(
                     Box::new(Term::Variable("x".to_string())),
                     Box::new(Term::Variable("y".to_string()))
-                )
+                ))
             ]
         );
     }
@@ -33,7 +42,7 @@ mod tests {
         let terms = parse_prog(input);
         assert_eq!(
             &terms,
-            &[Term::Abstraction(
+            &[Expr::Term(Term::Abstraction(
                 "x".to_string(),
                 Box::new(Term::Abstraction(
                     "y".to_string(),
@@ -48,7 +57,7 @@ mod tests {
                         ))
                     ))
                 ))
-            )]
+            ))]
         );
     }
 
@@ -56,12 +65,10 @@ mod tests {
     fn test_eval() {
         let mut env = HashMap::new();
         let input = "x = λx. (x y); x y;";
-        let terms = parse_prog(input);
-        let mut terms = terms.into_iter();
-        let first = terms.next().expect("No terms found");
-        let result = terms.fold(eval(&first, &mut env, false), |_, term| {
-            eval(&term, &mut env, false)
-        });
+        let prog = parse_prog(input);
+        assert_eq!(prog.len(), 2);
+        eval_expr(&prog[0], &mut env, false);
+        let result = eval_expr(&prog[1], &mut env, false);
         assert_eq!(
             result,
             Term::Application(
@@ -69,5 +76,21 @@ mod tests {
                 Box::new(Term::Variable("y".to_string()))
             )
         );
+    }
+
+    /// We should be able to have recursive function definitions
+    /// and inline them in one step at a time without any issues.
+    #[test]
+    fn test_inline_vars_one_step() {
+        let mut env = HashMap::new();
+        let input = "A = λx. (A x); A y;";
+        let expected = "(λx. (A x)) y";
+        let prog = parse_prog(input);
+        let binding = parse_prog(expected).pop().unwrap();
+        let prog_expected = binding.term();
+        assert_eq!(prog.len(), 2);
+        eval_expr(&prog[0], &mut env, false);
+        let inlined = inline_vars(prog[1].term(), &env);
+        assert_eq!(&inlined, prog_expected);
     }
 }
