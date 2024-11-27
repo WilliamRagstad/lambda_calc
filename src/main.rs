@@ -7,13 +7,9 @@ use std::{
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 
+mod print;
 mod test;
 
-const DARK_GRAY: &str = "\x1b[90m";
-const YELLOW: &str = "\x1b[33m";
-const CYAN: &str = "\x1b[36m";
-const RED: &str = "\x1b[31m";
-const RESET: &str = "\x1b[0m";
 /// Lambda calculus parser using pest
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -200,7 +196,7 @@ fn eval(term: &Term, env: &mut HashMap<String, Term>, verbose: bool) -> Term {
         val
     } else {
         if verbose {
-            println!("{}", pretty_print(term));
+            println!("{}", print::term(&term));
         }
         reduce_to_normal_form(term, verbose)
     }
@@ -234,74 +230,15 @@ fn run(input: String, env: &mut HashMap<String, Term>, verbose: bool) {
         result = eval(&term, env, verbose);
         if verbose && i < terms.len() - 1 {
             println!("{DARK_GRAY}------------------{RESET}");
+                println!("{}", print::term(&term));
         }
-    }
-    if !verbose {
-        println!("{}", pretty_print(&result));
     }
 }
 
-/// Pretty print a term
-fn pretty_print(term: &Term) -> String {
-    fn print_var(v: &str) -> String {
-        match v.to_ascii_lowercase().as_str() {
-            "true" => format!("{CYAN}true{RESET}"),
-            "false" => format!("{CYAN}false{RESET}"),
-            func if char::is_uppercase(func.chars().next().unwrap()) => {
-                format!("{RED}{}{RESET}", v)
-            }
-            _ => v.to_string(),
         }
-    }
-    fn print_term(term: &Term, top: bool) -> String {
-        match term {
-            Term::Variable(v) => print_var(v),
-            Term::Assignment(name, val) => format!(
-                "{}{DARK_GRAY} = {RESET}{}{DARK_GRAY};{RESET}",
-                name,
-                print_term(val, false)
-            ),
-            Term::Abstraction(param, body) => {
-                let body = if matches!(**body, Term::Application(_, _)) {
-                    format!(
-                        "{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}",
-                        print_term(body, false)
-                    )
-                } else {
-                    print_term(body, false)
-                };
-                format!(
-                    "{YELLOW}λ{RESET}{}{DARK_GRAY}.{RESET}{}",
-                    print_var(param),
-                    body
-                )
-            }
-            Term::Application(f, x) => {
-                let lhs = if matches!(**f, Term::Variable(_)) {
-                    print_term(f, false)
-                } else {
-                    format!(
-                        "{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}",
-                        print_term(f, false)
-                    )
-                };
-                let rhs = if matches!(**x, Term::Variable(_)) {
-                    print_term(x, false)
-                } else {
-                    format!(
-                        "{DARK_GRAY}({RESET}{}{DARK_GRAY}){RESET}",
-                        print_term(x, false)
-                    )
-                };
-                if top {
-                    format!("{DARK_GRAY}({RESET}{} {}{DARK_GRAY}){RESET}", lhs, rhs)
-                } else {
-                    format!("{} {}", lhs, rhs)
-                }
             }
         }
     }
-    print_term(term, true)
 }
 
 fn main() {
@@ -336,7 +273,7 @@ fn main() {
                 ":q" | ":quit" => break,
                 ":env" => {
                     for (name, term) in &env {
-                        println!("{} = {}", name, pretty_print(term));
+                        println!("{} = {}", name, print::term(term));
                     }
                     continue;
                 }
