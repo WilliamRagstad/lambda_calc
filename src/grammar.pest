@@ -1,6 +1,6 @@
 WHITESPACE = _{ " " | "\t" | "\n" }
 program    = _{ SOI ~ ((assignment | application | term) ~ ";"?)* ~ EOI }
-assignment =  { variable ~ "=" ~ term }
+assignment =  { variable ~ "=" ~ (application | term) }
 // Lambda calculus
 term        = _{ abstraction | "(" ~ application ~ ")" | variable | "(" ~ term ~ ")" }
 abstraction =  { ("\\" | "λ") ~ variable ~ "." ~ term }

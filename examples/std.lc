@@ -16,10 +16,10 @@ Mul    = λm.λn.λf.λx.((m (n f)) x);
 IsZero = λn.((n λx.False) True);
 Eq     = λm.λn.((And (IsZero ((Add m) n))) (IsZero ((Add n) m)));
 
- 6 = (Succ 5);   7 = (Succ 6);   8 = (Succ 7);   9 = (Succ 8);  10 = (Succ 9);
-11 = (Succ 10); 12 = (Succ 11); 13 = (Succ 12); 14 = (Succ 13); 15 = (Succ 14);
-16 = (Succ 15); 17 = (Succ 16); 18 = (Succ 17); 19 = (Succ 18); 20 = (Succ 19);
-21 = (Succ 20); 22 = (Succ 21); 23 = (Succ 22); 24 = (Succ 23); 25 = (Succ 24);
-26 = (Succ 25); 27 = (Succ 26); 28 = (Succ 27); 29 = (Succ 28); 30 = (Succ 29);
+ 6 = Succ 5;   7 = Succ 6;   8 = Succ 7;   9 = Succ 8;  10 = Succ 9;
+11 = Succ 10; 12 = Succ 11; 13 = Succ 12; 14 = Succ 13; 15 = Succ 14;
+16 = Succ 15; 17 = Succ 16; 18 = Succ 17; 19 = Succ 18; 20 = Succ 19;
+21 = Succ 20; 22 = Succ 21; 23 = Succ 22; 24 = Succ 23; 25 = Succ 24;
+26 = Succ 25; 27 = Succ 26; 28 = Succ 27; 29 = Succ 28; 30 = Succ 29;
 
 Fact = λn.((((If (IsZero n)) 1) ((Mul n) (Fact (Succ (Pred n))))));
