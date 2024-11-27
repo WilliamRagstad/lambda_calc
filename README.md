@@ -21,25 +21,25 @@ To display more detailed information, use `--help`.
 Is a valid term that evaluates to `λx.x` by applying the identity function `λx.λx.x` to the argument `x`.
 
 ```hs
-(((λx.λy.x y) (λz.z)) (λw.w))
+((λx.λy.x y) (λz.z) (λw.w))
 ```
 
 Simply becomes `λw.w`.
 
 ```hs
-((λx.(x x)) (λx.(x x)))
+(λx.(x x)) (λx.(x x))
 ```
 
 The above term is called the Omega combinator and reduces to itself. Resulting in a non-terminating term.
 
 ```hs
-F = λx.λy.(x y)
-G = λz.z
-H = λw.w
-((F G) H)
+F = λx.λy.(x y);
+G = λz.z;
+H = λw.w;
+F G H
 ```
 
-Uses assignments to simplify the last term `(F G) H`, and reduces to `λz.z`.
+Uses assignments to simplify the last term `F G H`, and reduces to `λz.z`.
 
 ## Boolean Logic
 
@@ -55,10 +55,10 @@ Here the parameter names `true` and `false` are used to represent the two possib
 And logical operations:
 
 ```hs
-Not = λa.((a False) True)
-And = λa.λb.((a b) False)
-Or  = λa.λb.((a True) b)
-If  = λa.λt.λf.((a t) f)
+Not = λa.(a False True)
+And = λa.λb.(a b False)
+Or  = λa.λb.(a True b)
+If  = λa.λt.λf.(a t f)
 ```
 
 > [!NOTE]
@@ -66,8 +66,8 @@ If  = λa.λt.λf.((a t) f)
 >
 > ```hs
 > Not True
-> (Or False) True
-> (And True) False
+> Or False True
+> And True False
 > ```
 
 ## Arithmetics
@@ -87,8 +87,8 @@ Imagine `f` as an action like "take a step forward," and `x` as your starting po
 And arithmetic operations:
 
 ```hs
-Succ = λn.λf.λx.(f ((n f) x))
-Add  = λm.λn.λf.λx.((m f) ((n f) x))
+Succ = λn.λf.λx.(f (n f x))
+Add  = λm.λn.λf.λx.((m f) (n f x))
 Mul  = λm.λn.λf.λx.((m (n f)) x)
 ```
 
@@ -112,7 +112,7 @@ Mul  = λm.λn.λf.λx.((m (n f)) x)
 > λf.λx.(((λf.λx.(f x)) f) (((λf.λx.(f (f x))) f) x))
 > λf.λx.((λx.(f x)) ((λx.(f (f x))) x))
 > λf.λx.(f ((λx.(f (f x))) x))
-> λf.λx.(f (f (f x))) -- Result = 3
+> λf.λx.(f (f (f x))) -- Result: 3
 > ```
 
 ## Comparison
@@ -143,8 +143,8 @@ Y = λf.((λx.(f (x x)) λx.(f (x x))))
 > Try evaluating the following terms yourself
 >
 > ```hs
-> ((S K) K) I -- Result = I
-> (M M) M     -- Result = Non-terminating
+> ((S K) K) I -- Result: I
+> (M M) M     -- Result: Non-terminating
 > ```
 
 ## Recursion
@@ -183,7 +183,34 @@ $$
 Where $M[x:=N]$ is the result of replacing all free occurrences of $x$ in the body of the abstraction $M$ with the argument expression $N$.
 The second fundamental operation is $α$-conversion ($`(\lambda x.M[x]) \rightarrow (\lambda y.M[y])`$), which is the renaming of bound variables in an expression to avoid name collisions.
 
-## Extension
+## Language Extensions
+
+### Application Ergonomics
+
+The application of a function to an argument is denoted by placing the function and argument next to each other without any delimiters: `f x`.
+
+To make the syntax more ergonomic, application can take any number of arguments separated by whitespace.
+
+```hs
+A B C D E == ((((A B) C) D) E)
+```
+
+### Environment $\Gamma$
+
+The interpreter will always reduce terms to their simplest form, aka normal form.
+This is done **symbolically** by applying the beta reduction rules until no more reductions are possible.
+However, this allows for a nice interactive way of working, as *you can refer to non-existing terms* and still get a result.
+
+```hs
+> And = λa.λb.(a b False) -- Define And
+> And True False          -- Attempt 1
+(((True False)) False)    -- Notice: True and False are undefined but we still get a result
+
+> True  = λtrue.λfalse.true  -- Define True
+> False = λtrue.λfalse.false -- Define False
+> And True False          -- Attempt 2
+λtrue.λfalse.false        -- Result: False
+```
 
 The implementation is extended with variable assignments to terms.
 This allows for the definition of terms that can be used later in the evaluation of other terms using an environment $\Gamma$ mapping names to terms.
@@ -202,9 +229,11 @@ Id = λx.x
 The term `Id` can now be used in other terms to simplify expressions.
 Both terms evaluate to `λx.x`.
 
+### REPL Commands
+
 The REPL also has commands to load files and display the current environment.
 
 ```bash
 > :load ./examples/std.lc
-> :env
+> :help  # Display help
 ```
