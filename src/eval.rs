@@ -1,7 +1,6 @@
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},
-    io,
 };
 
 use crate::{
@@ -128,9 +127,13 @@ pub fn beta_reduce(term: &Term, env: &Env, mut bound_vars: HashSet<String>) -> T
 pub fn reduce_to_normal_form(term: &Term, env: &Env, verbose: bool) -> Term {
     let mut term = term.clone();
     loop {
-        let next = beta_reduce(&term, env, HashSet::new());
+        let mut next = beta_reduce(&term, env, HashSet::new());
         if next == term {
-            return term;
+            // Try to inline variables in the term
+            next = inline_vars(&next, env);
+            if next == term {
+                return term;
+            }
         }
         term = next;
         if verbose {
