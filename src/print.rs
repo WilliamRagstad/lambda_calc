@@ -57,3 +57,7 @@ pub fn term(t: &Term) -> String {
         }
     }
 }
+
+pub fn assign(name: &str, t: &Term) -> String {
+    format!("{} = {}{DARK_GRAY};{RESET}", var(name), term(t))
+}

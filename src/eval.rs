@@ -173,7 +173,7 @@ pub fn eval_expr(expr: &Expr, env: &mut Env, verbose: bool) -> Term {
     match expr {
         Expr::Assignment(name, val) => {
             if verbose {
-                println!("{} = {};", print::var(name), print::term(val));
+                println!("{}", print::assign(name, val));
             }
             // Explicitly DON'T apply beta reduction here!
             // We want recursive combinators to not be evaluated until they are used
