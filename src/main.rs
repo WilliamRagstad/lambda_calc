@@ -48,6 +48,10 @@ fn main() {
                     env.clear();
                     continue;
                 }
+                ":std" => {
+                    eval_prog(include_str!("./std.lc").into(), &mut env, verbose);
+                    continue;
+                }
                 ":load" => {
                     let Some(file) = args.get(1) else {
                         eprintln!("Usage: :load <file>");
@@ -66,6 +70,7 @@ fn main() {
                     println!("  :env           Print the current environment");
                     println!("  :clear         Clear the current environment");
                     println!("  :load <file>   Load a file into the environment");
+                    println!("  :std           Load the standard library");
                     println!("  :help          Print this help message");
                     continue;
                 }
