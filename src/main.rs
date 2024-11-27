@@ -69,6 +69,10 @@ fn main() {
                     println!("  :help          Print this help message");
                     continue;
                 }
+                cmd if cmd.starts_with(":") => {
+                    eprintln!("Unknown command: {}, try :help", cmd);
+                    continue;
+                }
                 _ => {}
             }
             eval_prog(input, &mut env, verbose);
