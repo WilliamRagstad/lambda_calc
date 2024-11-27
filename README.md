@@ -205,6 +205,6 @@ Both terms evaluate to `λx.x`.
 The REPL also has commands to load files and display the current environment.
 
 ```bash
-> :load examples/identity.lc
+> :load ./examples/std.lc
 > :env
 ```
