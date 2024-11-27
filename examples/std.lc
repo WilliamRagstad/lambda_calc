@@ -21,3 +21,5 @@ Eq     = λm.λn.((And (IsZero ((Add m) n))) (IsZero ((Add n) m)));
 16 = (Succ 15); 17 = (Succ 16); 18 = (Succ 17); 19 = (Succ 18); 20 = (Succ 19);
 21 = (Succ 20); 22 = (Succ 21); 23 = (Succ 22); 24 = (Succ 23); 25 = (Succ 24);
 26 = (Succ 25); 27 = (Succ 26); 28 = (Succ 27); 29 = (Succ 28); 30 = (Succ 29);
+
+Fact = λn.((((If (IsZero n)) 1) ((Mul n) (Fact (Succ (Pred n))))));
