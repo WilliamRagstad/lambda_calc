@@ -15,29 +15,35 @@ mod test;
 #[grammar = "grammar.pest"]
 struct LambdaCalcParser;
 
+/// AST for our extended lambda calculus program
+#[derive(Debug, Clone, PartialEq)]
+enum Expr {
+    Assignment(String, Term),
+    Term(Term),
+}
+
+/// A program is a list of expressions
+type Program = Vec<Expr>;
+
+/// Environment mapping variable names to terms
+type Env = HashMap<String, Term>;
+
 /// AST for lambda calculus
 ///
 /// See https://en.wikipedia.org/wiki/Lambda_calculus#Definition.
 #[derive(Debug, Clone, PartialEq)]
 enum Term {
     Variable(String),
-    Assignment(String, Box<Term>),
     Abstraction(String, Box<Term>),
     Application(Box<Term>, Box<Term>),
 }
 
 /// Parse a top-level program into a list of terms
-fn parse_prog(input: &str) -> Vec<Term> {
+fn parse_prog(input: &str) -> Program {
     /// Transform a Pest pair into our own AST Expr node format
     fn parse_term(pair: Pair<Rule>) -> Term {
         match pair.as_rule() {
             Rule::variable => Term::Variable(pair.as_str().to_string()),
-            Rule::assignment => {
-                let mut inner = pair.into_inner();
-                let name = inner.next().unwrap().as_str().to_string();
-                let term = parse_term(inner.next().unwrap());
-                Term::Assignment(name, Box::new(term))
-            }
             Rule::abstraction => {
                 let mut inner = pair.into_inner();
                 let param = inner.next().unwrap().as_str().to_string();
@@ -54,21 +60,28 @@ fn parse_prog(input: &str) -> Vec<Term> {
         }
     }
 
-    let mut terms = Vec::new();
+    let mut prog = Program::new();
     let pairs = match LambdaCalcParser::parse(Rule::program, input) {
         Ok(pairs) => pairs,
         Err(e) => {
             eprintln!("{}", e);
-            return terms;
+            return prog;
         }
     };
     for pair in pairs {
-        if let Rule::EOI = pair.as_rule() {
-            break;
+        match pair.as_rule() {
+            Rule::EOI => break,
+            Rule::assignment => {
+                let mut inner = pair.into_inner();
+                let name = inner.next().unwrap().as_str().to_string();
+                let term = parse_term(inner.next().unwrap());
+                prog.push(Expr::Assignment(name, term));
+            }
+            // Parse a lambda calculus term
+            _ => prog.push(Expr::Term(parse_term(pair))),
         }
-        terms.push(parse_term(pair));
     }
-    terms
+    prog
 }
 
 /// Substitute a variable in a term with another term
@@ -103,7 +116,6 @@ fn substitute(term: &Term, var: &str, value: &Term) -> Term {
             // Substitute inside the abstraction's body
             Term::Abstraction(s.clone(), Box::new(substitute(body, var, value)))
         }
-        _ => unreachable!(),
     }
 }
 
@@ -130,7 +142,6 @@ fn free_vars(term: &Term) -> HashSet<String> {
             set.extend(free_vars(e2));
             set
         }
-        _ => unreachable!(),
     }
 }
 
@@ -151,7 +162,6 @@ fn rename_var(term: &Term, old_var: &str, new_var: &str) -> Term {
             Box::new(rename_var(e1, old_var, new_var)),
             Box::new(rename_var(e2, old_var, new_var)),
         ),
-        _ => unreachable!(),
     }
 }
 
@@ -167,7 +177,6 @@ fn beta_reduce(term: &Term) -> Term {
                 Term::Application(Box::new(beta_reduce(e1)), Box::new(beta_reduce(e2)))
             }
         }
-        _ => unreachable!(),
     }
 }
 
@@ -186,15 +195,7 @@ fn eval(term: &Term, env: &mut HashMap<String, Term>, verbose: bool) -> Term {
                 println!("{}", pretty_print(&term));
             }
         }
-    }
-    // Do the actual work
-    if let Term::Assignment(name, val) = term {
-        // Explicitly DON'T apply beta reduction here!
-        // We want recursive combinators to not be evaluated until they are used
-        let val = *val.clone();
-        env.insert(name.clone(), val.clone());
-        val
-    } else {
+        term = next;
         if verbose {
             println!("{}", print::term(&term));
         }
@@ -206,9 +207,6 @@ fn eval(term: &Term, env: &mut HashMap<String, Term>, verbose: bool) -> Term {
 fn inline_vars(term: &Term, env: &HashMap<String, Term>) -> Term {
     match &term {
         Term::Variable(v) => env.get(v).cloned().unwrap_or(term.clone()),
-        Term::Assignment(name, val) => {
-            Term::Assignment(name.clone(), Box::new(inline_vars(val, env)))
-        }
         Term::Abstraction(param, body) => {
             Term::Abstraction(param.clone(), Box::new(inline_vars(body, env)))
         }
@@ -218,25 +216,43 @@ fn inline_vars(term: &Term, env: &HashMap<String, Term>) -> Term {
     }
 }
 
-/// Run the given input program in the given environment
-fn run(input: String, env: &mut HashMap<String, Term>, verbose: bool) {
-    let terms = parse_prog(input.replace("\r", "").trim());
-    if terms.is_empty() {
-        return;
-    }
-    let mut result = terms[0].clone();
-    for (i, term) in terms.iter().enumerate() {
-        let term = inline_vars(term, env);
-        result = eval(&term, env, verbose);
-        if verbose && i < terms.len() - 1 {
-            println!("{DARK_GRAY}------------------{RESET}");
+fn eval_expr(expr: &Expr, env: &mut Env, verbose: bool) -> Term {
+    match expr {
+        Expr::Assignment(name, val) => {
+            if verbose {
+                println!("{} = {};", print::var(name), print::term(val));
+            }
+            // Explicitly DON'T apply beta reduction here!
+            // We want recursive combinators to not be evaluated until they are used
+            env.insert(name.clone(), val.clone());
+            val.clone()
+        }
+        Expr::Term(term) => {
+            let term = inline_vars(term, env);
+            if verbose {
                 println!("{}", print::term(&term));
         }
     }
 }
 
+/// Run the given input program in the given environment
+fn eval_prog(input: String, env: &mut Env, verbose: bool) {
+    let terms: Program = parse_prog(input.replace("\r", "").trim());
+    for (i, expr) in terms.iter().enumerate() {
+        let term = eval_expr(expr, env, verbose);
+        if matches!(expr, Expr::Assignment(_, _)) {
+            continue;
         }
+        if verbose {
+            // Print all terms and their reduction steps
+            // println!("{}", print::term(&term));
+            if i < terms.len() - 1 {
+                print::line(20);
             }
+        }
+        if !verbose && i == terms.len() - 1 {
+            // Always print the last term if not in verbose mode
+            println!("{}", print::term(&term));
         }
     }
 }
@@ -256,7 +272,7 @@ fn main() {
         false
     });
     if args.len() == 2 {
-        run(
+        eval_prog(
             std::fs::read_to_string(&args[1]).unwrap(),
             &mut env,
             verbose,
@@ -287,7 +303,7 @@ fn main() {
                         continue;
                     };
                     if let io::Result::Ok(content) = std::fs::read_to_string(file) {
-                        run(content, &mut env, verbose);
+                        eval_prog(content, &mut env, verbose);
                     } else {
                         eprintln!("Error reading file");
                     }
@@ -304,7 +320,7 @@ fn main() {
                 }
                 _ => {}
             }
-            run(input, &mut env, verbose);
+            eval_prog(input, &mut env, verbose);
         }
     }
 }
