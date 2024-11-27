@@ -4,5 +4,5 @@ assignment =  { variable ~ "=" ~ term }
 // Lambda calculus
 term        = _{ abstraction | "(" ~ application ~ ")" | variable | "(" ~ term ~ ")" }
 abstraction =  { ("\\" | "λ") ~ variable ~ "." ~ term }
-application =  { term ~ term }
+application =  { term ~ term+ }
 variable    = @{ ASCII_ALPHANUMERIC+ ~ "'"* }
