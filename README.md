@@ -195,7 +195,16 @@ To make the syntax more ergonomic, application can take any number of arguments 
 A B C D E == ((((A B) C) D) E)
 ```
 
-### Environment $\Gamma$
+### Comments
+
+Comments can be added to the code using the `--` symbol.
+
+```hs
+-- This is a comment
+A B -- This is also a comment
+```
+
+### Assignment and Environment $\Gamma$
 
 The interpreter will always reduce terms to their simplest form, aka normal form.
 This is done **symbolically** by applying the beta reduction rules until no more reductions are possible.
