@@ -38,14 +38,18 @@ fn main() {
             let args: Vec<&str> = input.trim().split(' ').collect::<Vec<&str>>();
             match *args.first().unwrap_or(&"") {
                 ":q" | ":quit" => break,
-                ":env" => {
-                    for (name, term) in &env {
-                        println!("{} = {}", name, print::term(term));
-                    }
+                ":cls" | ":clear" => {
+                    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
                     continue;
                 }
-                ":clear" => {
-                    env.clear();
+                ":env" => {
+                    if args.len() == 2 && args[1] == "clear" {
+                        env.clear();
+                    } else {
+                        for (name, term) in &env {
+                            println!("{} = {}", name, print::term(term));
+                        }
+                    }
                     continue;
                 }
                 ":std" => {
@@ -67,8 +71,9 @@ fn main() {
                 ":help" => {
                     println!("Commands:");
                     println!("  :q, :quit      Quit the program");
+                    println!("  :cls, :clear   Clear the screen");
                     println!("  :env           Print the current environment");
-                    println!("  :clear         Clear the current environment");
+                    println!("  :env clear     Clear the current environment");
                     println!("  :load <file>   Load a file into the environment");
                     println!("  :std           Load the standard library");
                     println!("  :help          Print this help message");
