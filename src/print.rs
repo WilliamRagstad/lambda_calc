@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use crate::Term;
 
 const DARK_GRAY: &str = "\x1b[90m";
@@ -10,6 +12,14 @@ const RESET: &str = "\x1b[0m";
 
 pub fn line(len: usize) {
     println!("{}{}{}", DARK_GRAY, "-".repeat(len), RESET);
+}
+
+pub fn pause(s: &str) {
+    print!("{YELLOW}<{}>{RESET}", s);
+    std::io::stdout().flush().unwrap();
+    let _ = std::io::stdin().read_line(&mut String::new()).unwrap();
+    print!("\x1b[1A"); // Move up one line
+    print!("\x1b[2K"); // Clear the line
 }
 
 pub fn var(v: &str) -> String {

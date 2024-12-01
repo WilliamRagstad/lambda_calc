@@ -124,7 +124,7 @@ pub fn beta_reduce(term: &Term, env: &Env, mut bound_vars: HashSet<String>) -> T
 }
 
 /// Reduce a term to normal form by repeatedly applying β-reduction
-pub fn reduce_to_normal_form(term: &Term, env: &Env, verbose: bool) -> Term {
+pub fn reduce_to_normal_form(term: &Term, env: &Env, verbose: bool, printer: PrinterFn) -> Term {
     let mut term = term.clone();
     loop {
         let mut next = beta_reduce(&term, env, HashSet::new());
@@ -137,7 +137,7 @@ pub fn reduce_to_normal_form(term: &Term, env: &Env, verbose: bool) -> Term {
         }
         term = next;
         if verbose {
-            println!("{}", print::term(&term));
+            printer(print::term(&term));
         }
     }
 }
@@ -172,11 +172,11 @@ pub fn inline_vars(term: &Term, env: &Env) -> Term {
     }
 }
 
-pub fn eval_expr(expr: &Expr, env: &mut Env, verbose: bool) -> Term {
+pub fn eval_expr(expr: &Expr, env: &mut Env, verbose: bool, printer: PrinterFn) -> Term {
     match expr {
         Expr::Assignment(name, val) => {
             if verbose {
-                println!("{}", print::assign(name, val));
+                printer(print::assign(name, val));
             }
             // Explicitly DON'T apply beta reduction here!
             // We want recursive combinators to not be evaluated until they are used
@@ -186,18 +186,18 @@ pub fn eval_expr(expr: &Expr, env: &mut Env, verbose: bool) -> Term {
         Expr::Term(term) => {
             let term = inline_vars(term, env);
             if verbose {
-                println!("{}", print::term(&term));
+                printer(print::term(&term));
             }
-            reduce_to_normal_form(&term, env, verbose)
+            reduce_to_normal_form(&term, env, verbose, printer)
         }
     }
 }
 
 /// Run the given input program in the given environment
-pub fn eval_prog(input: String, env: &mut Env, verbose: bool) {
+pub fn eval_prog(input: String, env: &mut Env, verbose: bool, printer: PrinterFn) {
     let terms: Program = parse_prog(input.replace("\r", "").trim());
     for (i, expr) in terms.iter().enumerate() {
-        let term = eval_expr(expr, env, verbose);
+        let term = eval_expr(expr, env, verbose, printer);
         if matches!(expr, Expr::Assignment(_, _)) {
             continue;
         }
@@ -210,7 +210,9 @@ pub fn eval_prog(input: String, env: &mut Env, verbose: bool) {
         }
         if !verbose && i == terms.len() - 1 {
             // Always print the last term if not in verbose mode
-            println!("{}", print::term(&term));
+            printer(print::term(&term));
         }
     }
 }
+
+pub type PrinterFn = fn(String);

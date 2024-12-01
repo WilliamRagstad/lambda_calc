@@ -5,6 +5,7 @@ mod tests {
     use crate::{
         eval::{eval_expr, inline_vars},
         parser::{parse_prog, Expr, Term},
+        PRINT_NONE,
     };
 
     impl Expr {
@@ -70,8 +71,8 @@ mod tests {
         let input = "x = λx. (x y); x y;";
         let prog = parse_prog(input);
         assert_eq!(prog.len(), 2);
-        eval_expr(&prog[0], &mut env, false);
-        let result = eval_expr(&prog[1], &mut env, false);
+        eval_expr(&prog[0], &mut env, false, PRINT_NONE);
+        let result = eval_expr(&prog[1], &mut env, false, PRINT_NONE);
         assert_eq!(
             result,
             Term::Application(
@@ -92,7 +93,7 @@ mod tests {
         let binding = parse_prog(expected).pop().unwrap();
         let prog_expected = binding.term();
         assert_eq!(prog.len(), 2);
-        eval_expr(&prog[0], &mut env, false);
+        eval_expr(&prog[0], &mut env, false, PRINT_NONE);
         let inlined = inline_vars(prog[1].term(), &env);
         assert_eq!(&inlined, prog_expected);
     }

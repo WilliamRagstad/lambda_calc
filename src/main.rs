@@ -1,12 +1,19 @@
-use std::{collections::HashMap, io};
+use std::collections::HashMap;
 
 mod eval;
 mod parser;
 mod print;
 mod test;
 
-use eval::eval_prog;
+use eval::{eval_prog, PrinterFn};
 use parser::Term;
+
+pub const PRINT_NONE: PrinterFn = |_| {};
+pub const PRINT_OUT: PrinterFn = |t| println!("{}", t);
+pub const PRINT_DBG: PrinterFn = |t| {
+    println!("{}", t);
+    print::pause("Paused: Enter to step");
+};
 
 fn main() {
     let mut env = HashMap::new();
@@ -27,6 +34,7 @@ fn main() {
             std::fs::read_to_string(&args[1]).unwrap(),
             &mut env,
             verbose,
+            PRINT_OUT,
         );
     } else {
         use std::io::Write;
@@ -53,7 +61,12 @@ fn main() {
                     continue;
                 }
                 ":std" => {
-                    eval_prog(include_str!("./std.lc").into(), &mut env, verbose);
+                    eval_prog(
+                        include_str!("./std.lc").into(),
+                        &mut env,
+                        verbose,
+                        PRINT_OUT,
+                    );
                     continue;
                 }
                 ":load" => {
@@ -61,11 +74,17 @@ fn main() {
                         eprintln!("Usage: :load <file>");
                         continue;
                     };
-                    if let io::Result::Ok(content) = std::fs::read_to_string(file) {
-                        eval_prog(content, &mut env, verbose);
+                    if let std::io::Result::Ok(content) = std::fs::read_to_string(file) {
+                        eval_prog(content, &mut env, verbose, PRINT_OUT);
                     } else {
                         eprintln!("Error reading file");
                     }
+                    continue;
+                }
+                ":dbg" => {
+                    // Step through the program evaluation
+                    let input = args[1..].join(" ");
+                    eval_prog(input, &mut env, verbose, PRINT_DBG);
                     continue;
                 }
                 ":help" => {
@@ -76,6 +95,7 @@ fn main() {
                     println!("  :env clear     Clear the current environment");
                     println!("  :load <file>   Load a file into the environment");
                     println!("  :std           Load the standard library");
+                    println!("  :dbg <prog>    Step through the evaluation");
                     println!("  :help          Print this help message");
                     continue;
                 }
@@ -85,7 +105,7 @@ fn main() {
                 }
                 _ => {}
             }
-            eval_prog(input, &mut env, verbose);
+            eval_prog(input, &mut env, verbose, PRINT_OUT);
         }
     }
 }
