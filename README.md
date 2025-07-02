@@ -1,7 +1,15 @@
 # Untyped Lambda Calculus
 
 This is a simple implementation of the untyped [lambda calculus](https://en.wikipedia.org/wiki/Lambda_calculus) in Rust.
-It is extended with variable assignments to terms.
+
+The grammar is extended with variable assignments to terms:
+
+```go
+e ::= x      // variable
+    | λx. e  // abstraction
+    | e e    // application
+    | x = e  // binding
+```
 
 ## Usage
 
